@@ -22,7 +22,11 @@
                     <p> {{ product.description|linebreaks }} </p>  <!--linebreaks  превращ обычн переносы строк (Enter) в HTML-переносы строки (<br>), чтобы текст красиво отобр на сайте.-->
                 </div>
                 <div class="mt-4">
-                    <button class="btn btn-primary btn-lg">Добавить в корзину</button><!--btn делает эл кнопкой b-prim окраш в цвет по умолч синий lg делает ее большой -->
+                    <form action="{% url "cart:cart_add" product.id %}" method="post">
+                        {{ cart_product_form }}
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-lg">Добавить в корзину</button>
+                    </form>
                 </div>
             </div>
         </div>

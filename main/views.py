@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Category, Product
+from cart.forms import CartAddProductForm
 
 
 def product_list(request, category_slug=None):   #c_slug=None т.к фильтр ниче не надо всё выводим,  щдесь будем вывод продукты
@@ -17,5 +18,6 @@ def product_list(request, category_slug=None):   #c_slug=None т.к фильтр
 def product_detail(request, id, slug):
     product = get_object_or_404(Product, id=id, slug=slug, available=True)#в скобках указ какие продукты берём
     related_products = Product.objects.filter(category=product.category, available=True).exclude(id=product.id)[:4]#rel_p похожие продукты, берем продукты такой же категории как у продукта и доступность exclude указ чтоб не вывод нынеш продукт и вывод всего 4 доп продукта максимум
+    cart_product_form = CartAddProductForm()
 
-    return render(request, 'main/product/detail.html', {'product': product, 'related_products': related_products})
+    return render(request, 'main/product/detail.html', {'product': product, 'related_products': related_products, 'cart_product_form': cart_product_form})
