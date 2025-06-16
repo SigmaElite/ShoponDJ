@@ -29,6 +29,39 @@
                     </li>
                     {% endfor %}
                 </ul>
+
+
+                <div class="search-container position-relative me-3">
+                    <form action="{% url "main:product_list" %}" class="d-flex" method="GET" id="searchForm">
+                        <div class="input-group">
+                            <input class="form-control"
+                                   type="search"
+                                   name="search"
+                                   id="searchInput"
+                                   placeholder="Поиск товаров..."
+                                   value="{{ request.GET.search|default:'' }}"
+                                   autocomplete="off"
+                                   aria-label="Поиск">
+                            <button class="btn btn-outline-light" type="submit" id="searchButton">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div> 
+                        <!-- Спиннер загрузки -->
+                        <div class="search-spinner position-absolute end-0 top-50 translate-middle-y me-5 d-none">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden"></span>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Выпадающий список результатов -->
+                    <div id="searchResults" class="search-results position-absolute bg-white shadow-lg rounded-3 mt-1 w-100 d-none">
+                        <div class="search-results-content"></div>
+                    </div>
+
+                </div>
+
+
                 <div class="d-flex">
                     <a href="{% url "cart:cart_detail" %}" class="btn btn-outline-light position-relative me-3">
                         <i class="bi bi-cart"></i> Корзина
@@ -79,5 +112,191 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const searchSpinner = document.querySelector('.search-spinner');
+    const searchForm = document.getElementById('searchForm');
+    
+    let searchTimeout;
+    let currentRequest;
+    
+    // Функция для подсветки найденного текста
+    function highlightText(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+    
+    // Функция для выполнения поиска
+    function performSearch(query) {
+        // Отменяем предыдущий запрос
+        if (currentRequest) {
+            currentRequest.abort();
+        }
+        
+        // Показываем спиннер
+        searchSpinner.classList.remove('d-none');
+        
+        // Создаем новый запрос
+        currentRequest = new AbortController();
+        
+        .then(response => response.json())
+        .then(data => {
+            displayResults(data, query);
+        })
+        .catch(error => {
+            if (error.name !== 'AbortError') {
+                console.error('Ошибка поиска:', error);
+            }
+        })
+        .finally(() => {
+            searchSpinner.classList.add('d-none');
+            currentRequest = null;
+        });
+    }
+    
+    // Функция для отображения результатов
+    function displayResults(data, query) {
+        const resultsContent = searchResults.querySelector('.search-results-content');
+        
+        if (data.products.length === 0) {
+            resultsContent.innerHTML = `
+                <div class="search-no-results">
+                    <i class="bi bi-search mb-2" style="font-size: 2rem; color: #dee2e6;"></i>
+                    <div>По запросу "<strong>${query}</strong>" ничего не найдено</div>
+                    <small class="text-muted">Попробуйте изменить поисковый запрос</small>
+                </div>
+            `;
+        } else {
+            let html = '';
+            
+            data.products.forEach(product => {
+                const highlightedName = highlightText(product.name, query);
+                
+                html += `
+                    <div class="search-item d-flex align-items-center" onclick="window.location.href='${product.url}'">
+                        <img src="${product.image}" 
+                             alt="${product.name}" 
+                             class="search-item-image"
+                             onerror="this.src='/static/img/no-image.png'">
+                        <div class="search-item-info">
+                            <div class="search-item-name">${highlightedName}</div>
+                            <div class="search-item-price">${product.price} ₽</div>
+                            ${product.category ? `<div class="search-item-category">${product.category}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Добавляем футер с ссылкой на полные результаты
+            if (data.total_found > data.count) {
+                html += `
+                    <div class="search-footer">
+                        <a href="/products/?search=${encodeURIComponent(query)}">
+                            Показать все результаты (${data.total_found})
+                        </a>
+                    </div>
+                `;
+            }
+            
+            resultsContent.innerHTML = html;
+        }
+        
+        // Показываем результаты с анимацией
+        searchResults.classList.remove('d-none');
+        searchResults.classList.add('show');
+    }
+    
+    // Обработчик ввода текста
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Очищаем предыдущий таймер
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.classList.add('d-none');
+            searchResults.classList.remove('show');
+            searchSpinner.classList.add('d-none');
+            return;
+        }
+        
+        // Задержка перед поиском (300ms)
+        searchTimeout = setTimeout(() => {
+            performSearch(query);
+        }, 300);
+    });
+    
+    // Обработчик фокуса на поле ввода
+    searchInput.addEventListener('focus', function() {
+        const query = this.value.trim();
+        if (query.length >= 2) {
+            searchResults.classList.remove('d-none');
+        }
+    });
+    
+    // Скрываем результаты при клике вне области поиска
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && 
+            !searchResults.contains(e.target) && 
+            !e.target.closest('.search-container')) {
+            searchResults.classList.add('d-none');
+            searchResults.classList.remove('show');
+        }
+    });
+    
+    // Обработка клавиш для навигации по результатам
+    let selectedIndex = -1;
+    const searchItems = () => searchResults.querySelectorAll('.search-item');
+    
+    searchInput.addEventListener('keydown', function(e) {
+        const items = searchItems();
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelection(items);
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection(items);
+                break;
+                
+            case 'Enter':
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    e.preventDefault();
+                    items[selectedIndex].click();
+                }
+                break;
+                
+            case 'Escape':
+                searchResults.classList.add('d-none');
+                searchResults.classList.remove('show');
+                selectedIndex = -1;
+                break;
+        }
+    });
+    
+    function updateSelection(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.style.backgroundColor = '#e3f2fd';
+            } else {
+                item.style.backgroundColor = '';
+            }
+        });
+    }
+    
+    // Сброс выделения при новом поиске
+    searchInput.addEventListener('input', function() {
+        selectedIndex = -1;
+    });
+});
+</script>
 </body>
 </html>

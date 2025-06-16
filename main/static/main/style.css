@@ -4,3 +4,142 @@
     max-width: 100%;
     object-fit: cover;
 }
+
+/* Стили для живого поиска */
+.search-container {
+    min-width: 300px;
+}
+
+.search-results {
+    z-index: 1050;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.search-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.search-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-item:last-child {
+    border-bottom: none;
+}
+
+.search-item-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.search-item-info {
+    flex: 1;
+    margin-left: 12px;
+}
+
+.search-item-name {
+    font-weight: 500;
+    color: #212529;
+    margin-bottom: 4px;
+}
+
+.search-item-price {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.search-item-category {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.search-no-results {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+}
+
+.search-footer {
+    padding: 12px 16px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.search-footer a {
+    color: #0d6efd;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.search-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Анимация появления результатов */
+.search-results.show {
+    animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Подсветка найденного текста */
+.highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .search-container {
+        min-width: 250px;
+    }
+    
+    .search-results {
+        left: -50px;
+        right: -50px;
+        width: auto;
+    }
+    
+    .search-item-image {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .search-item {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .search-container {
+        min-width: 200px;
+    }
+    
+    .search-item-name {
+        font-size: 0.9rem;
+    } 
+    
+    .search-item-price {
+        font-size: 0.9rem;
+    }
+}
