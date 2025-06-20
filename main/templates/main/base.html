@@ -98,7 +98,7 @@
                 </div>
                 <div class="col-md-4">
                     <h5>Контакты</h5>
-                    <p>Email: info@nuclearshop.ru<br>Телефон: +375 25 525 5225</p>
+                    <p>Email: info@nuclearshop.by<br>Телефон: +375 25 525 5225</p>
                 </div>
                 <div class="col-md-4">
                     <h5>Мы в социальных сетях</h5>
@@ -142,6 +142,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Создаем новый запрос
         currentRequest = new AbortController();
         
+        fetch(`{% url 'main:live_search' %}?q=${encodeURIComponent(query)}`, {
+            signal: currentRequest.signal
+        })
         .then(response => response.json())
         .then(data => {
             displayResults(data, query);
@@ -194,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.total_found > data.count) {
                 html += `
                     <div class="search-footer">
-                        <a href="/products/?search=${encodeURIComponent(query)}">
+                        <a href="{% url 'main:product_list' %}?search=${encodeURIComponent(query)}">
                             Показать все результаты (${data.total_found})
                         </a>
                     </div>
